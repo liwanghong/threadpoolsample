@@ -1,5 +1,4 @@
 CC     = gcc
-TARGET = thread_pool_sample
 CCFLAGS := -std=gnu99 -Wall -g
 
 ifeq ($(DEBUG), 1)
@@ -10,18 +9,29 @@ endif
 
 SRC_PATH := .
             
-C_SRCS := $(SRC_PATH)/main.c \
-            $(SRC_PATH)/list.c      \
+C_SRCS := $(SRC_PATH)/list.c      \
             $(SRC_PATH)/thread_pool.c  \
             $(SRC_PATH)/ordered_thread_pool.c  
 
-OBJECTS  := $(patsubst %.c,%.o,$(C_SRCS))
+TEST_SRCS := $(SRC_PATH)/main.c
 
-$(TARGET): $(OBJECTS)
-	$(CC) $(CCFLAGS) $(OBJECTS) -o $(TARGET) -lpthread 
+all: libthreadpool.so libthreadpool.a threadpooltest
+
+OBJECTS  := $(patsubst %.c,%.o,$(C_SRCS))
+TEST_OBJECTS := $(patsubst %.c,%.o,$(TEST_SRCS))
+
+libthreadpool.so: $(OBJECTS)
+	$(CC) $(CCFLAGS) -shared -o $@ $^ 
+
+libthreadpool.a: $(OBJECTS)
+	ar -rcs $@ $^ 
+    
+
+threadpooltest: $(TEST_OBJECTS) libthreadpool.a
+	$(CC) $(CCFLAGS) -o $@ $^ -lpthread
 
 %.o: %.c
 	$(CC) $(CCFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f *.o *.a *.so threadpooltest
